@@ -136,60 +136,23 @@ public class UpdateService extends Service {
 
     void startUpdating()
     {
-        setUpdateStatus(UpdateActivity.UpdateStatus.CheckUpdate);
-        Volley.newRequestQueue(getApplicationContext()).add(new StringRequest("https://samp-mobile.shop/client_config.json", new Response.Listener<String>() {
-            @Override
-            public void onResponse(String response) {
-                try {
-                    mUpdateFiles = new ArrayList<>();
-                    mUpdateFilesName = new ArrayList<>();
-                    mUpdateFilesSize = new ArrayList<>();
-
-                    JSONObject jSONObject = new JSONObject(response).getJSONObject("client_config");
-                    mUpdateVersion = jSONObject.getInt("version_code");
-                    mUpdateGameURL = jSONObject.getString("url_launcher");
-
-                    String string = jSONObject.getString("url_cache_files");
-
-                    getFilesInfo(string);
-
-                    if (!isGameUpdateExists()) {
-                        if (mUpdateFiles.isEmpty()) {
-                            mGameStatus = UpdateActivity.GameStatus.Updated;
-                        }
-                        else {
-                            mGameStatus = UpdateActivity.GameStatus.UpdateRequired;
-                        }
-                    }
-                    else {
-                        mGameStatus = UpdateActivity.GameStatus.GameUpdateRequired;
-                    }
-
-                    setUpdateStatus(UpdateActivity.UpdateStatus.Undefined);
-
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
+        // SBRP custom build: the upstream launcher-update / game-data-download check
+        // is disabled on purpose. It used to fetch client_config.json from the
+        // original author's server and could silently replace this client with the
+        // stock build. We report "Updated" so the splash screen proceeds directly
+        // to the main menu with no network dependency.
+        mGameStatus = UpdateActivity.GameStatus.Updated;
+        Message obtain = Message.obtain(mInHandler, 5);
+        obtain.getData().putString("status", mGameStatus.name());
+        obtain.replyTo = mMessenger;
+        Messenger messenger = mActivityMessenger;
+        if (messenger != null) {
+            try {
+                messenger.send(obtain);
+            } catch (RemoteException e5) {
+                e5.printStackTrace();
             }
-        }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                Log.d("x1y2z", "error " + error.toString());
-                mGameStatus = UpdateActivity.GameStatus.Unknown;
-                Message obtain = Message.obtain(mInHandler, 5);
-                obtain.getData().putString("status", mGameStatus.name());
-                obtain.replyTo = mMessenger;
-                Messenger messenger = mActivityMessenger;
-                if (messenger != null) {
-                    try {
-                        messenger.send(obtain);
-                    } catch (RemoteException e5) {
-                        e5.printStackTrace();
-                    }
-                }
-
-            }
-        }));
+        }
     }
 
     public void getFilesInfo(String response) throws JSONException {

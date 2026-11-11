@@ -43,7 +43,7 @@
         android:id="@+id/view3"
         android:layout_width="@dimen/_200sdp"
         android:layout_height="@dimen/_3sdp"
-        android:background="#FF0037"
+        android:background="#F5C542"
         app:layout_constraintBottom_toTopOf="@+id/settings_nickname"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"

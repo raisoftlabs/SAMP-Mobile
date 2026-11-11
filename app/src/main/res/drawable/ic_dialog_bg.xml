@@ -9,7 +9,7 @@
                 android:radius="12.0dip" />
             <gradient
                 android:startColor="#99000000"
-                android:endColor="#FF0037"
+                android:endColor="#F5C542"
                 android:angle="45.0"
                 android:type="linear"
                 android:centerX="79.99999%"
