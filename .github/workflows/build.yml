@@ -1,0 +1,58 @@
+name: Build SBRP Client APK
+on:
+  push:
+    branches: [ GTA-2.10, sbrp, main ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install NDK and CMake
+        run: |
+          yes | sdkmanager --licenses >/dev/null 2>&1 || true
+          sdkmanager "ndk;26.2.11394342" "cmake;3.22.1" >/dev/null
+          echo "ndk.dir=$ANDROID_SDK_ROOT/ndk/26.2.11394342" >> "$GITHUB_ENV"
+
+      - name: Generate keystore
+        run: |
+          mkdir -p keys
+          keytool -genkeypair -v -keystore keys/new.jks -storepass 123123 -keypass 123123 \
+            -alias key0 -keyalg RSA -keysize 2048 -validity 10000 \
+            -dname "CN=SBRP, OU=Dev, O=SBRP, L=Dhaka, C=BD"
+
+      - name: Build debug APK
+        run: ./gradlew assembleDebug --no-daemon --stacktrace
+
+      - name: Upload APK artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbrp-client-debug
+          path: app/build/outputs/apk/debug/*.apk
+          if-no-files-found: warn
+
+      - name: Publish release
+        if: success()
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: apk-${{ github.run_number }}
+          name: SBRP Client build ${{ github.run_number }}
+          files: app/build/outputs/apk/debug/*.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
