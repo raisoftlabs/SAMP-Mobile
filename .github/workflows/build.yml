@@ -40,7 +40,9 @@ jobs:
             -dname "CN=SBRP, OU=Dev, O=SBRP, L=Dhaka, C=BD"
 
       - name: Build debug APK
-        run: ./gradlew assembleDebug --no-daemon --stacktrace
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon --stacktrace
 
       - name: Upload APK artifact
         if: always()
