@@ -61,7 +61,7 @@ public class ServerAddFragment extends Dialog {
                 Matcher matcher2 = compile2.matcher(editText.getText().toString());
                 if (matcher.find() || matcher2.find()) {
                     if (!editText.getText().toString().contains(":")) {
-                        editText.setText(editText.getText().toString() + ":7777");
+                        editText.setText(editText.getText().toString() + ":7778");
                     }
                     /*try {
                         BufferedReader bufferedReader = new BufferedReader(new FileReader(mFavouriteServerAdapter.mServerFavouriteFile));

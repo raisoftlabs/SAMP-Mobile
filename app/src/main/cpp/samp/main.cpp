@@ -254,7 +254,14 @@ void DoInitStuff()
 	{
 		//ReadSettingFile();
 
-		pNetGame = new CNetGame("94.23.168.153", 2305, pSettings->Get().szNickName, pSettings->Get().szPassword);
+		// SBRP: connect to whatever host/port the launcher wrote into settings.ini
+		// (the "Connect" button in the server browser writes them). The base client
+		// hardcoded a single IP here, which made the whole server list cosmetic.
+		const char* szConnectHost = pSettings->Get().szHost;
+		if (szConnectHost[0] == '\0')
+			szConnectHost = "127.0.0.1";
+
+		pNetGame = new CNetGame(szConnectHost, pSettings->Get().iPort, pSettings->Get().szNickName, pSettings->Get().szPassword);
 		bNetworkInited = true;
 
         FLog("DoInitStuff end");
