@@ -152,6 +152,22 @@ public class SplashActivity extends AppCompatActivity {
             GLSurfaceView mGlSurfaceView = new GLSurfaceView(this);
             mGlSurfaceView.setRenderer(mGlRenderer);
             gpuLayout.addView(mGlSurfaceView);
+
+            // SBRP watchdog: on some devices the GL surface callback never fires,
+            // which used to leave the splash screen hanging forever. Fall back to
+            // the ETC texture path and continue after a short wait.
+            gpuLayout.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    if (isFinishing() || mIsBind) {
+                        return;
+                    }
+                    if (mGpuType == 0) {
+                        mGpuType = 2;
+                    }
+                    mIsBind = bindService(new Intent(SplashActivity.this, UpdateService.class), mConnection, Context.BIND_AUTO_CREATE);
+                }
+            }, 8000);
         }
     }
 
@@ -266,7 +282,10 @@ public class SplashActivity extends AppCompatActivity {
         }
         if (grantResults.length <= 0 || grantResults[0] != 0) {
             Toast.makeText(this, "Permissions not granted!", Toast.LENGTH_LONG).show();
-        } else {
+        }
+        // SBRP: bind regardless of the permission result, otherwise the splash
+        // screen hangs forever whenever a permission is denied
+        if (!mIsBind) {
             mIsBind = bindService(new Intent(this, UpdateService.class), mConnection, Context.BIND_AUTO_CREATE);
         }
 
@@ -285,7 +304,7 @@ public class SplashActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
 
-        if (prefs.getBoolean("firstrun", true)) {
+        if (prefs != null && prefs.getBoolean("firstrun", true)) {
             new SharedPreferenceCore().setInt(getApplicationContext(), "FPS_LIMIT", 60);
             new SharedPreferenceCore().setInt(getApplicationContext(), "MESSAGE_COUNT", 6);
             new SharedPreferenceCore().setBoolean(getApplicationContext(), "AIM", false);

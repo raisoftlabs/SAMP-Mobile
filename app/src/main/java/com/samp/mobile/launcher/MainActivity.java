@@ -184,16 +184,19 @@ public class MainActivity extends AppCompatActivity {
                         getServerList().add(sAMPServerInfo);
                     }
                 } catch (JSONException e) {
-                    throw new RuntimeException(e);
+                    Log.e("x1y2z", "server list parse failed", e);
+                    return;
                 }
 
                 for (Fragment fragment : getSupportFragmentManager().getFragments()) {
                     if (fragment instanceof ServersFragment) {
-                        while (!fragment.isAdded()) {
+                        // bounded wait: this callback runs on the main thread, never block forever
+                        for (int wait = 0; wait < 3 && !fragment.isAdded(); wait++) {
                             try {
-                                Thread.sleep(1000);
+                                Thread.sleep(300);
                             } catch (InterruptedException e) {
                                 e.printStackTrace();
+                                break;
                             }
                         }
                         if(fragment.isAdded()) {
@@ -213,7 +216,10 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onErrorResponse(VolleyError error) {
                 Log.d("x1y2z", "error " + error.toString());
-                getServersInfo();
+                // bounded retry: do not spin forever when the list server is unreachable
+                if (++retryAttempt <= 3) {
+                    getServersInfo();
+                }
                 z[0] = false;
             }
         }));
